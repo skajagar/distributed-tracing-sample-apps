@@ -14,6 +14,15 @@ import os
 import django_opentracing
 import jaeger_client
 
+import wavefront_opentracing_sdk.reporting
+
+
+from wavefront_sdk import WavefrontProxyClient
+from wavefront_opentracing_sdk.reporting import WavefrontSpanReporter
+from wavefront_sdk.common import ApplicationTags
+from wavefront_sdk import WavefrontDirectClient
+from wavefront_opentracing_sdk import WavefrontTracer
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -136,6 +145,32 @@ TRACER = jaeger_client.Config(
     },
     service_name='delivery',
 ).initialize_tracer()
+
+
+
+application_tags = ApplicationTags(application="sada-automation-deliveryApp",
+                                   service="inventory",
+                                   cluster="us-west-2",
+                                   shard="secondary",
+                                   custom_tags=[("location", "Oregon")])
+
+
+proxy_client = WavefrontProxyClient(
+    host=os.environ.get('PROXY_SERVER'),
+    tracing_port=30000,
+    distribution_port=2878,
+    metrics_port=os.environ.get('PROXY_PORT')
+)
+
+proxy_reporter = WavefrontSpanReporter(client=proxy_client)
+
+direct_client = WavefrontDirectClient(
+    server=os.environ.get('WAVEFRONT_SERVER'),
+    token=os.environ.get('WAVEFRONT_TOKEN')
+)
+direct_reporter = WavefrontSpanReporter(client=direct_client)
+
+TRACER = WavefrontTracer(reporter=direct_reporter, application_tags=application_tags)
 
 OPENTRACING_TRACE_ALL = False
 OPENTRACING_TRACER = django_opentracing.DjangoTracing(TRACER)
