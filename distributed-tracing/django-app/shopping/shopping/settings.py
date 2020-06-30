@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import django_opentracing
+import argparse
+import sys
 import jaeger_client
 
 
@@ -127,31 +129,37 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-
-application_tags = ApplicationTags(application="sada-automation-ShoppingApp",
-                                   service="inventory",
-                                   cluster="us-west-2",
-                                   shard="secondary",
-                                   custom_tags=[("location", "Oregon")])
-
-
-proxy_client = WavefrontProxyClient(
-    host = os.environ.get('PROXY_SERVER'),
-    tracing_port=30000,
-    distribution_port=2878,
-    metrics_port = os.environ.get('PROXY_PORT')
-)
-
-proxy_reporter = WavefrontSpanReporter(client=proxy_client)
-
-direct_client = WavefrontDirectClient(
-    server=os.environ.get('WAVEFRONT_SERVER'),
-    token=os.environ.get('WAVEFRONT_TOKEN')
-)
-direct_reporter = WavefrontSpanReporter(client=direct_client)
-
-TRACER = WavefrontTracer(reporter=direct_reporter, application_tags=application_tags)
-
-
-OPENTRACING_TRACE_ALL = False
-OPENTRACING_TRACER = django_opentracing.DjangoTracing(TRACER)
+if (sys.argv[3].lower() in ("true", "false")):
+    enable_proxy = sys.argv[3].lower()
+    if enable_proxy.__eq__('false'):
+        application_tags = ApplicationTags(application= sys.argv[6],
+                                           service="inventory",
+                                           cluster="us-west-2",
+                                           shard="secondary",
+                                           custom_tags=[("location", "Oregon")])
+        direct_client = WavefrontDirectClient(
+            server=os.environ.get('WAVEFRONT_SERVER'),
+            token=os.environ.get('WAVEFRONT_TOKEN')
+        )
+        direct_reporter = WavefrontSpanReporter(client=direct_client)
+        TRACER = WavefrontTracer(reporter=direct_reporter, application_tags=application_tags)
+        OPENTRACING_TRACE_ALL = False
+        OPENTRACING_TRACER = django_opentracing.DjangoTracing(TRACER)
+    elif enable_proxy.__eq__('true'):
+        application_tags = ApplicationTags(application= sys.argv[6],
+                                           service="inventory",
+                                           cluster="us-west-2",
+                                           shard="secondary",
+                                           custom_tags=[("location", "Oregon")])
+        proxy_client = WavefrontProxyClient(
+            host=os.environ.get('PROXY_SERVER'),
+            tracing_port=30000,
+            distribution_port=2878,
+            metrics_port=os.environ.get('PROXY_PORT')
+        )
+        proxy_reporter = WavefrontSpanReporter(client=proxy_client)
+        TRACER = WavefrontTracer(reporter=proxy_reporter, application_tags=application_tags)
+        OPENTRACING_TRACE_ALL = False
+        OPENTRACING_TRACER = django_opentracing.DjangoTracing(TRACER)
+else:
+    raise argparse.ArgumentTypeError('Boolean value expected.')

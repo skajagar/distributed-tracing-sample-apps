@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 import os
 import sys
+import argparse
 
 
 def remove_all_wavefront_env_prop(argv):
     print("Cleanup all the wavefront env properties before creating the wavefront client")
-    if sys.argv[3].__eq__('direct'):
+    if sys.argv[3].lower().__eq__('false'):
         if os.environ.get('WAVEFRONT_SERVER') is not None:
          del os.environ['WAVEFRONT_SERVER']
         if os.environ.get('WAVEFRONT_TOKEN') is not None :
          del os.environ['WAVEFRONT_TOKEN']
-    elif sys.argv[3].__eq__('proxy'):
+    elif sys.argv[3].lower().__eq__('true'):
         if os.environ.get('PROXY_SERVER') is not None:
          del os.environ['PROXY_SERVER']
         if os.environ.get('PROXY_PORT') is not None :
@@ -45,14 +46,14 @@ def set_proxy_properties(argv):
 
 if __name__ == "__main__":
     remove_all_wavefront_env_prop(argv=sys.argv)
-    injectionKind = sys.argv[3]
-    if injectionKind.__eq__('direct'):
-        set_direct_properties(argv=sys.argv)
-    elif injectionKind.__eq__('proxy'):
-        set_proxy_properties(argv=sys.argv)
+    if (sys.argv[3].lower() in ("true", "false")):
+        enable_proxy = sys.argv[3].lower()
+        if enable_proxy.__eq__('false'):
+            set_direct_properties(argv=sys.argv)
+        elif enable_proxy.__eq__('true'):
+            set_proxy_properties(argv=sys.argv)
     else:
-        print("Kind should be direct or proxy injectionKind")
-        raise Exception("wavefront client kind should be mentioned (direct or proxy) with properties")
+        raise argparse.ArgumentTypeError('Boolean value expected.')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "delivery.settings")
     try:
         from django.core.management import execute_from_command_line
