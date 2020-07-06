@@ -46,6 +46,7 @@ def set_proxy_properties(argv):
 
 if __name__ == '__main__':
     remove_all_wavefront_env_prop(argv=sys.argv)
+    print(sys.argv)
     if (sys.argv[3].lower() in ("true", "false")):
         enable_proxy = sys.argv[3].lower()
         if enable_proxy.__eq__('false'):

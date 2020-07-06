@@ -46,6 +46,7 @@ def set_proxy_properties(argv):
 
 if __name__ == '__main__':
     remove_all_wavefront_env_prop(argv=sys.argv)
+    print(sys.argv)
     if (sys.argv[3].lower() in ("true", "false")):
         enable_proxy = sys.argv[3].lower()
         if enable_proxy.__eq__('false'):
@@ -53,7 +54,7 @@ if __name__ == '__main__':
         elif enable_proxy.__eq__('true'):
             set_proxy_properties(argv=sys.argv)
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError('Boolean value expected. but not found ')
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'shopping.settings')
     try:
         from django.core.management import execute_from_command_line
