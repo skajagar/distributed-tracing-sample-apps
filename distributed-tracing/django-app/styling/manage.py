@@ -32,16 +32,9 @@ def set_direct_properties(argv):
 
 def set_proxy_properties(argv):
     proxy = argv[4]
-    port = argv[5]
     os.environ.setdefault('PROXY_SERVER', proxy)
-    os.environ.setdefault('PROXY_PORT', port)
     print("setting wavefront client properties with proxy injection")
     print('proxy server set with : ' + os.environ.get('PROXY_SERVER') + ' env variable as  : ' + 'PROXY_SERVER')
-    print('proxy port set with : ' + os.environ.get('PROXY_PORT') + ' env variable as  : ' + 'PROXY_PORT')
-    """ java_home = os.environ.get('JAVA_HOME')
-    print("JAVA_HOME:", java_home)
-    proxy = os.environ.get('PROXY_SERVER')
-    print(proxy) """
 
 
 if __name__ == '__main__':

@@ -152,30 +152,35 @@ TRACER = jaeger_client.Config(
 if (sys.argv[3].lower() in ("true", "false")):
     enable_proxy = sys.argv[3].lower()
     if enable_proxy.__eq__('false'):
-        application_tags = ApplicationTags(application= sys.argv[6],
+        application_tags = ApplicationTags(application= sys.argv[9]+'-delivery',
                                            service="inventory",
                                            cluster="us-west-2",
                                            shard="secondary",
                                            custom_tags=[("location", "Oregon")])
+        server=os.environ.get('WAVEFRONT_SERVER'),
+        token=os.environ.get('WAVEFRONT_TOKEN')
         direct_client = WavefrontDirectClient(
             server=os.environ.get('WAVEFRONT_SERVER'),
-            token=os.environ.get('WAVEFRONT_TOKEN')
+            token=os.environ.get('WAVEFRONT_TOKEN'),
+            max_queue_size=int(sys.argv[7]),
+            batch_size=int(sys.argv[6]),
+            flush_interval_seconds=int(sys.argv[8])
         )
         direct_reporter = WavefrontSpanReporter(client=direct_client)
         TRACER = WavefrontTracer(reporter=direct_reporter, application_tags=application_tags)
         OPENTRACING_TRACE_ALL = False
         OPENTRACING_TRACER = django_opentracing.DjangoTracing(TRACER)
     elif enable_proxy.__eq__('true'):
-        application_tags = ApplicationTags(application= sys.argv[6],
+        application_tags = ApplicationTags(application= sys.argv[5]+'-delivery',
                                            service="inventory",
                                            cluster="us-west-2",
                                            shard="secondary",
                                            custom_tags=[("location", "Oregon")])
         proxy_client = WavefrontProxyClient(
             host=os.environ.get('PROXY_SERVER'),
-            tracing_port=30000,
+            metrics_port=2878,
             distribution_port=2878,
-            metrics_port=os.environ.get('PROXY_PORT')
+            tracing_port=30000,
         )
         proxy_reporter = WavefrontSpanReporter(client=proxy_client)
         TRACER = WavefrontTracer(reporter=proxy_reporter, application_tags=application_tags)
